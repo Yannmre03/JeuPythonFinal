@@ -3,7 +3,7 @@ import csv
 from colorama import Back, Fore, Style
 from random import randint
 import random
-
+import shutil
 
 def initialiser_grille():
     tailleGrillei = random.randint(9, 19)
@@ -46,22 +46,20 @@ def initialiser_grille():
     return GrilleJoueur, GrilleV1, positionJoueur, tailleGrillei - 1, tailleGrillej - 1
 
 
-def afficher_grille(ma_grille, pseudo, score):
-    print("Si la fenêtre de jeu est trop étroite, vous pouvez dézoomer le terminal avec la molette de votre souris")
-    print((Fore.BLUE + "┌" + Style.RESET_ALL) + (Fore.BLUE + "───┬" + Style.RESET_ALL) * (len(ma_grille[0]) - 1) + (
-                Fore.BLUE + "───┐" + Style.RESET_ALL))
+def afficher_grille(ma_grille, pseudo, score,boolDebug):
+    print((Fore.BLUE + "┌" + Style.RESET_ALL) + (Fore.BLUE + "──" + Style.RESET_ALL) * (len(ma_grille[0]) - 1) + (
+                Fore.BLUE + "──┐" + Style.RESET_ALL))
     for i, ligne in enumerate(ma_grille):
-        if i != 0:
-            print((Fore.BLUE + "├" + Style.RESET_ALL) + (Fore.BLUE + "───┼" + Style.RESET_ALL) * (len(ligne) - 1) + (
-                        Fore.BLUE + "───┤" + Style.RESET_ALL))
+        print(Fore.BLUE + "│" + Style.RESET_ALL, end="")
         for valeur in ligne:
-            print((Fore.BLUE + "│ " + Style.RESET_ALL) + valeur + " ", end="")
+            print((Fore.BLUE + "" + Style.RESET_ALL) + valeur + " ", end="")
 
         print(
             Fore.BLUE + "│ " + Style.RESET_ALL + Fore.RED + " ▲" + Style.RESET_ALL + " curseur joueur" if i == 1 else Fore.BLUE + "│  " + Style.RESET_ALL + Fore.RED + Back.GREEN + "▲" + Style.RESET_ALL + " devant une situation" if i == 2 else Fore.BLUE + "│  " + Style.RESET_ALL + Back.WHITE + " " + Style.RESET_ALL + " case déjà traversee" if i == 3 else Fore.BLUE + "│ " + Style.RESET_ALL +(" "+pseudo+": "+Fore.GREEN + str(score) + Style.RESET_ALL if int(
-                score) >= 0 else " "+pseudo+": "+Fore.RED + str(score) + Style.RESET_ALL) if i ==0 else Fore.BLUE + "│" + Style.RESET_ALL )
-    print((Fore.BLUE + "└") + (Fore.BLUE + "───┴" + Style.RESET_ALL) * (len(ligne) - 1) + (
-                Fore.BLUE + "───┘" + Style.RESET_ALL))
+                score) >= 0 else " "+pseudo+": "+Fore.RED + str(score) + Style.RESET_ALL) if i ==0 else Fore.BLUE + "│ " + Style.RESET_ALL + " M : Mur" if i ==4 and boolDebug else Fore.BLUE + "│ " + Style.RESET_ALL + " P : Situation Positive" if i==5 and boolDebug else Fore.BLUE + "│ " + Style.RESET_ALL + " N : Situation negative" if i==6 and boolDebug else Fore.BLUE + "│ " + Style.RESET_ALL + " S : Sortie" if i == 7 and boolDebug else Fore.BLUE + "│ " + Style.RESET_ALL)
+    #24 +2
+    print((Fore.BLUE + "└") + (Fore.BLUE + "──" + Style.RESET_ALL) * (len(ligne) - 1) + (
+                Fore.BLUE + "──┘" + Style.RESET_ALL))
 
 
 def afficher_accueil():
@@ -89,7 +87,7 @@ def afficher_regles():
 def afficher_jeu(nomF, scoreF):
     print("Save the Fish!")
     grilleJ, GrilleAdmin, posJoueur, tailleI, tailleJ = initialiser_grille()
-    afficher_grille(grilleJ,nomF, scoreF)
+    afficher_grille(grilleJ,nomF, scoreF, False)
     return grilleJ, GrilleAdmin, posJoueur, tailleI, tailleJ
 
 
@@ -288,12 +286,15 @@ def fonction_open_csv():
 
 def fonction_Sortie(nomF, ScoreF):
     row = [nomF, ScoreF]
-    with open('Scores.csv', 'a', newline='') as csv_file:
+    with open('Scores.csv', 'a', newline='') as csv_file: #Stocke le pseudo et score dans le tableau des scores
         writer = csv.writer(csv_file)
         writer.writerow(row)
-    with open('PartieEnCours.csv', 'w', newline='') as csv_file:
+    with open('PartieEnCours.csv', 'w', newline='') as csv_file: #efface les données des csv suivants
         pass
-
+    with open('GrilleAdmin.csv', 'w', newline='') as csv_file:
+        pass
+    with open('GrilleJoueur.csv', 'w', newline='') as csv_file:
+        pass
 
 def fonction_recuperer_scores():
     Scores = []
@@ -373,6 +374,7 @@ def SelectionChoix():
             if PartieExiste == False:
                 print("pas de partie en cours."+ "\n")
             else:
+                afficher_grille(GrilleJ2, nom2, Score2, False)
                 if HistBool == "True":
                     HistBool = True
                 else:
@@ -396,12 +398,6 @@ def fonctionPrincipale():
         grilleJoueurG, GrilleAdminG, posJoueurG, tailleIG, tailleJG, nom, Score, HistDebogage, BoolQuitter = SelectionChoix()
         if BoolQuitter:
             break
-        if nom == "":
-            nom = input(Fore.GREEN + Style.BRIGHT + "Entrez votre pseudo puis cliquez enter: " + Style.RESET_ALL)
-            Score = 0
-        else:
-            afficher_grille(grilleJoueurG,nom,Score)
-            HistDebogage = False
         orientationG = "i"  # par défaut orienté vers le haut
         SituationBool = False
         Debogage = False
@@ -411,10 +407,10 @@ def fonctionPrincipale():
                 posJoueurG, orientationG, GrilleAdminG, grilleJoueurG, tailleIG, tailleJG, SituationBool, Debogage)
 
             if Debogage:
-                afficher_grille(GrilleAdminG, nom, Score)
+                afficher_grille(GrilleAdminG, nom, Score, True)
                 HistDebogage = True
             else:
-                afficher_grille(grilleJoueurG, nom, Score)
+                afficher_grille(grilleJoueurG, nom, Score, False)
 
             if SituationBool:
                 print(Style.BRIGHT + Fore.YELLOW + "en face d'une situation" + Style.RESET_ALL)
@@ -453,7 +449,7 @@ def fonctionPrincipale():
                 break
             if Relancer:
                 grilleJoueurG, GrilleAdminG, posJoueurG, tailleIG, tailleJG = initialiser_grille()
-                afficher_grille(grilleJoueurG, nom, Score)
+                afficher_grille(grilleJoueurG, nom, Score, False)
                 SituationBool = False
                 Debogage = False
                 HistDebogage = False
@@ -462,3 +458,6 @@ def fonctionPrincipale():
 
 
 fonctionPrincipale()
+
+#shutil pour centrer
+#légende débogage: print(... if ... else ...)
